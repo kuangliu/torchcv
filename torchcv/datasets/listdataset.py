@@ -17,15 +17,17 @@ class ListDataset(data.Dataset):
     The list file is like:
       a.jpg xmin ymin xmax ymax label xmin ymin xmax ymax label ...
     '''
-    def __init__(self, root, list_file, transform=None):
+    def __init__(self, root, list_file, transform=None, box_coder=None):
         '''
         Args:
           root: (str) ditectory to images.
           list_file: (str) path to index file.
           transform: (function) image/box transforms.
+          box_coder: (object) encode boxes.
         '''
         self.root = root
         self.transform = transform
+        self.box_coder = box_coder
 
         self.fnames = []
         self.boxes = []
@@ -74,6 +76,10 @@ class ListDataset(data.Dataset):
 
         if self.transform:
             img, boxes = self.transform(img, boxes)
+
+        if self.box_coder:
+            _, h, w = img.size()
+            boxes, labels = self.box_coder.encode(boxes, labels, (w,h))
         return img, boxes, labels
 
     def __len__(self):
