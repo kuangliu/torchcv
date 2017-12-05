@@ -10,12 +10,12 @@ from torchcv.datasets import ListDataset
 from torchcv.visualizations import vis_image
 
 
-def transform(img, boxes):
+def transform(img, boxes, labels):
     img, boxes = resize(img, boxes, size=600)
     img, boxes = random_flip(img, boxes)
     img, boxes = random_paste(img, boxes, (1000,1000), left_top=True)
     img = transforms.ToTensor()(img)
-    return img, boxes
+    return img, boxes, labels
 
 dataset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/val2017',
                       list_file='torchcv/datasets/mscoco/coco17_val.txt',

@@ -35,14 +35,13 @@ def transform_train(img, boxes, labels):
     img, boxes = random_flip(img, boxes)
     return img, boxes, labels
 
-trainset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/train2017',
-                       list_file='torchcv/datasets/mscoco/coco17_train.txt',
-                       transform=transform_train)
-
 def transform_test(img, boxes, labels):
     img, boxes = resize(img, boxes, size=600)
     return img, boxes, labels
 
+trainset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/train2017',
+                       list_file='torchcv/datasets/mscoco/coco17_train.txt',
+                       transform=transform_train)
 testset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/val2017',
                       list_file='torchcv/datasets/mscoco/coco17_val.txt',
                       transform=transform_test)
@@ -81,7 +80,7 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=True, 
 testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=4, collate_fn=collate_fn)
 
 # Model
-net = RetinaNet()
+net = RetinaNet(num_classes=90)
 net.load_state_dict(torch.load(args.model))  # load pretrained model
 
 best_loss = float('inf')  # best test loss
@@ -96,7 +95,7 @@ if args.resume:
 net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
 net.cuda()
 
-criterion = FocalLoss()
+criterion = FocalLoss(num_classes=90)
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
 
 # Training

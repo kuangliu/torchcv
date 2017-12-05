@@ -9,7 +9,7 @@ from torchcv.utils import one_hot_embedding
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, num_classes=90):
+    def __init__(self, num_classes):
         super(FocalLoss, self).__init__()
         self.num_classes = num_classes
 
