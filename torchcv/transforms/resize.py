@@ -10,7 +10,7 @@ def resize(img, boxes, size, max_size=1000):
 
     Args:
       img: (PIL.Image) image to be resized.
-      boxes: (tensor) object boxes, sized [#ojb,4].
+      boxes: (tensor) object boxes, sized [#obj,4].
       size: (tuple or int)
         - if is tuple, resize image to the size.
         - if is int, resize the shorter side to the size while maintaining the aspect ratio.
