@@ -21,7 +21,7 @@ class ListDataset(data.Dataset):
         '''
         Args:
           root: (str) ditectory to images.
-          list_file: (str) path to index file.
+          list_file: (str/[str]) path to index file.
           transform: (function) image/box transforms.
         '''
         self.root = root
@@ -30,6 +30,13 @@ class ListDataset(data.Dataset):
         self.fnames = []
         self.boxes = []
         self.labels = []
+
+        if isinstance(list_file, list):
+            # Cat multiple list files together.
+            # This is especially useful for voc07/voc12 combination.
+            tmp_file = '/tmp/listfile.txt'
+            os.system('cat %s > %s' % (' '.join(list_file), tmp_file))
+            list_file = tmp_file
 
         with open(list_file) as f:
             lines = f.readlines()
