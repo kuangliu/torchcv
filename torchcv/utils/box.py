@@ -15,7 +15,7 @@ def change_box_order(boxes, order):
     a = boxes[:,:2]
     b = boxes[:,2:]
     if order == 'xyxy2xywh':
-        return torch.cat([(a+b)/2,b-a+1], 1)
+        return torch.cat([(a+b)/2,b-a], 1)
     return torch.cat([a-b/2,a+b/2], 1)
 
 def box_iou(box1, box2, order='xyxy'):
@@ -44,11 +44,11 @@ def box_iou(box1, box2, order='xyxy'):
     lt = torch.max(box1[:,None,:2], box2[:,:2])  # [N,M,2]
     rb = torch.min(box1[:,None,2:], box2[:,2:])  # [N,M,2]
 
-    wh = (rb-lt+1).clamp(min=0)      # [N,M,2]
+    wh = (rb-lt).clamp(min=0)      # [N,M,2]
     inter = wh[:,:,0] * wh[:,:,1]  # [N,M]
 
-    area1 = (box1[:,2]-box1[:,0]+1) * (box1[:,3]-box1[:,1]+1)  # [N,]
-    area2 = (box2[:,2]-box2[:,0]+1) * (box2[:,3]-box2[:,1]+1)  # [M,]
+    area1 = (box1[:,2]-box1[:,0]) * (box1[:,3]-box1[:,1])  # [N,]
+    area2 = (box2[:,2]-box2[:,0]) * (box2[:,3]-box2[:,1])  # [M,]
     iou = inter / (area1[:,None] + area2 - inter)
     return iou
 
@@ -72,7 +72,7 @@ def box_nms(bboxes, scores, threshold=0.5, mode='union'):
     x2 = bboxes[:,2]
     y2 = bboxes[:,3]
 
-    areas = (x2-x1+1) * (y2-y1+1)
+    areas = (x2-x1) * (y2-y1)
     _, order = scores.sort(0, descending=True)
 
     keep = []
@@ -88,8 +88,8 @@ def box_nms(bboxes, scores, threshold=0.5, mode='union'):
         xx2 = x2[order[1:]].clamp(max=x2[i])
         yy2 = y2[order[1:]].clamp(max=y2[i])
 
-        w = (xx2-xx1+1).clamp(min=0)
-        h = (yy2-yy1+1).clamp(min=0)
+        w = (xx2-xx1).clamp(min=0)
+        h = (yy2-yy1).clamp(min=0)
         inter = w*h
 
         if mode == 'union':
