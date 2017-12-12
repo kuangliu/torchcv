@@ -21,8 +21,8 @@ def random_flip(img, boxes):
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
         w = img.width
         if boxes is not None:
-            xmin = w - boxes[:,2] - 1
-            xmax = w - boxes[:,0] - 1
+            xmin = w - boxes[:,2]
+            xmax = w - boxes[:,0]
             boxes[:,0] = xmin
             boxes[:,2] = xmax
     return img, boxes

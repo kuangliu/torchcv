@@ -18,15 +18,33 @@ def change_box_order(boxes, order):
         return torch.cat([(a+b)/2,b-a], 1)
     return torch.cat([a-b/2,a+b/2], 1)
 
-def box_iou(box1, box2, order='xyxy'):
+def box_clamp(boxes, xmin, ymin, xmax, ymax):
+    '''Clamp boxes.
+
+    Args:
+      boxes: (tensor) bounding boxes of (xmin,ymin,xmax,ymax), sized [N,4].
+      xmin: (number) min value of x.
+      ymin: (number) min value of y.
+      xmax: (number) max value of x.
+      ymax: (number) max value of y.
+
+    Returns:
+      (tensor) clamped boxes.
+    '''
+    boxes[:,0].clamp_(min=xmin, max=xmax)
+    boxes[:,1].clamp_(min=ymin, max=ymax)
+    boxes[:,2].clamp_(min=xmin, max=xmax)
+    boxes[:,3].clamp_(min=ymin, max=ymax)
+    return boxes
+
+def box_iou(box1, box2):
     '''Compute the intersection over union of two set of boxes.
 
-    The default box order is (xmin, ymin, xmax, ymax).
+    The box order must be (xmin, ymin, xmax, ymax).
 
     Args:
       box1: (tensor) bounding boxes, sized [N,4].
       box2: (tensor) bounding boxes, sized [M,4].
-      order: (str) box order, either 'xyxy' or 'xywh'.
 
     Return:
       (tensor) iou, sized [N,M].
@@ -34,10 +52,6 @@ def box_iou(box1, box2, order='xyxy'):
     Reference:
       https://github.com/chainer/chainercv/blob/master/chainercv/utils/bbox/bbox_iou.py
     '''
-    if order == 'xywh':
-        box1 = change_box_order(box1, 'xywh2xyxy')
-        box2 = change_box_order(box2, 'xywh2xyxy')
-
     N = box1.size(0)
     M = box2.size(0)
 
