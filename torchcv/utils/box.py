@@ -37,6 +37,25 @@ def box_clamp(boxes, xmin, ymin, xmax, ymax):
     boxes[:,3].clamp_(min=ymin, max=ymax)
     return boxes
 
+def box_select(boxes, xmin, ymin, xmax, ymax):
+    '''Select boxes in range (xmin,ymin,xmax,ymax).
+
+    Args:
+      boxes: (tensor) bounding boxes of (xmin,ymin,xmax,ymax), sized [N,4].
+      xmin: (number) min value of x.
+      ymin: (number) min value of y.
+      xmax: (number) max value of x.
+      ymax: (number) max value of y.
+
+    Returns:
+      (tensor) selected boxes, sized [M,4].
+      (tensor) selected mask, sized [N,].
+    '''
+    mask = (boxes[:,0]>=xmin) & (boxes[:,1]>=ymin) \
+         & (boxes[:,2]<=xmax) & (boxes[:,3]<=ymax)
+    boxes = boxes[mask.nonzero().squeeze(),:]
+    return boxes, mask
+
 def box_iou(box1, box2):
     '''Compute the intersection over union of two set of boxes.
 
