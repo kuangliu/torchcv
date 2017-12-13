@@ -53,7 +53,7 @@ def random_crop(img, boxes, labels):
 
             selected_boxes = boxes[mask.nonzero().squeeze(),:]
             iou = box_iou(selected_boxes, roi)
-            if iou.min() < min_iou:
+            if iou.max() < min_iou:
                 continue
 
             img = img.crop((x,y,x+w,y+h))
