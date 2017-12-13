@@ -36,24 +36,22 @@ def random_crop(img, boxes, labels):
         for _ in range(100):
             w = random.randrange(int(0.1*imw), imw)
             h = random.randrange(int(0.1*imh), imh)
-
             if h > 2*w or w > 2*h:
                 continue
 
             x = random.randrange(imw - w)
             y = random.randrange(imh - h)
-            roi = torch.Tensor([[x, y, x+w, y+h]])
 
-            center = (boxes[:,:2] + boxes[:,2:]) / 2              # [N,2]
-            roi2 = roi.expand(len(center), 4)                     # [N,4]
-            mask = (center > roi2[:,:2]) & (center < roi2[:,2:])  # [N,2]
-            mask = mask[:,0] & mask[:,1]                          # [N,]
+            center = (boxes[:,:2] + boxes[:,2:]) / 2
+            mask = (center[:,0]>=x) & (center[:,0]<=x+w) \
+                 & (center[:,1]>=y) & (center[:,1]<=y+h)
             if not mask.any():
                 continue
 
+            roi = torch.Tensor([[x,y,x+w,y+h]])
             selected_boxes = boxes[mask.nonzero().squeeze(),:]
             iou = box_iou(selected_boxes, roi)
-            if iou.max() < min_iou:
+            if iou.min() < min_iou:
                 continue
 
             img = img.crop((x,y,x+w,y+h))
