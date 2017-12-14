@@ -68,20 +68,22 @@ class BoxCoder:
         Args:
           boxes: (tensor) bounding boxes of (xmin,ymin,xmax,ymax), sized [#obj, 4].
           labels: (tensor) object class labels, sized [#obj,].
-          input_size: (int/tuple) model input size of (w,h).
+          input_size: (tuple) model input size of (w,h).
 
         Returns:
           loc_targets: (tensor) encoded bounding boxes, sized [#anchors,4].
           cls_targets: (tensor) encoded class labels, sized [#anchors,].
         '''
-        input_size = torch.Tensor([input_size,input_size]) if isinstance(input_size, int) \
-                     else torch.Tensor(input_size)
-        anchor_boxes = self._get_anchor_boxes(input_size)
-        boxes = change_box_order(boxes, 'xyxy2xywh')
+        input_size = torch.Tensor(input_size)
+        anchor_boxes = self._get_anchor_boxes(input_size)  # xywh
+        anchor_boxes = change_box_order(anchor_boxes, 'xywh2xyxy')
 
-        ious = box_iou(anchor_boxes, boxes, order='xywh')
+        ious = box_iou(anchor_boxes, boxes)
         max_ious, max_ids = ious.max(1)
         boxes = boxes[max_ids]
+
+        boxes = change_box_order(boxes, 'xyxy2xywh')
+        anchor_boxes = change_box_order(anchor_boxes, 'xyxy2xywh')
 
         loc_xy = (boxes[:,:2]-anchor_boxes[:,:2]) / anchor_boxes[:,2:]
         loc_wh = torch.log(boxes[:,2:]/anchor_boxes[:,2:])
@@ -90,7 +92,7 @@ class BoxCoder:
 
         cls_targets[max_ious<0.5] = 0
         ignore = (max_ious>0.4) & (max_ious<0.5)  # ignore ious between [0.4,0.5]
-        cls_targets[ignore] = -1  # for now just mark ignored to -1
+        cls_targets[ignore] = -1                  # mark ignored to -1
         return loc_targets, cls_targets
 
     def decode(self, loc_preds, cls_preds, input_size):
@@ -99,7 +101,7 @@ class BoxCoder:
         Args:
           loc_preds: (tensor) predicted locations, sized [#anchors, 4].
           cls_preds: (tensor) predicted class labels, sized [#anchors, #classes].
-          input_size: (int/tuple) model input size of (w,h).
+          input_size: (tuple) model input size of (w,h).
 
         Returns:
           boxes: (tensor) decode box locations, sized [#obj,4].
@@ -108,9 +110,8 @@ class BoxCoder:
         CLS_THRESH = 0.5
         NMS_THRESH = 0.5
 
-        input_size = torch.Tensor([input_size,input_size]) if isinstance(input_size, int) \
-                     else torch.Tensor(input_size)
-        anchor_boxes = self._get_anchor_boxes(input_size)
+        input_size = torch.Tensor(input_size)
+        anchor_boxes = self._get_anchor_boxes(input_size)  # xywh
 
         loc_xy = loc_preds[:,:2]
         loc_wh = loc_preds[:,2:]
