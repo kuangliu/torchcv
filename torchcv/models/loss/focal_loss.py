@@ -84,7 +84,7 @@ class FocalLoss(nn.Module):
         loc_loss = F.smooth_l1_loss(masked_loc_preds, masked_loc_targets, size_average=False)
 
         #===============================================================
-        # cls_loss = FocalLoss(loc_preds, loc_targets)
+        # cls_loss = FocalLoss(cls_preds, cls_targets)
         #===============================================================
         pos_neg = cls_targets > -1  # exclude ignored anchors
         mask = pos_neg.unsqueeze(2).expand_as(cls_preds)

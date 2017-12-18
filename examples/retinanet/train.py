@@ -17,7 +17,8 @@ from torch.autograd import Variable
 
 from torchcv.datasets import ListDataset
 from torchcv.transforms import resize, random_flip, random_paste
-from torchcv.models.retinanet import BoxCoder, RetinaNet, FocalLoss
+from torchcv.models.loss import FocalLoss
+from torchcv.models.retinanet import BoxCoder, RetinaNet
 
 
 parser = argparse.ArgumentParser(description='PyTorch RetinaNet Training')
