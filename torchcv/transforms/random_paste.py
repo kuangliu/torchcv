@@ -4,7 +4,7 @@ import random
 from PIL import Image
 
 
-def random_paste(img, boxes, out_size, left_top=False):
+def random_paste(img, boxes, max_ratio=4, fill=0):
     '''Randomly paste the input image on a larger canvas.
 
     If boxes is not None, adjust boxes accordingly.
@@ -12,18 +12,20 @@ def random_paste(img, boxes, out_size, left_top=False):
     Args:
       img: (PIL.Image) image to be flipped.
       boxes: (tensor) object boxes, sized [#obj,4].
-      out_size: (tuple) output size of (w,h).
-      left_top: (bool) place image on the left-top corner.
+      max_ratio: (int) maximum ratio of expansion.
+      fill: (tuple) the RGB value to fill the canvas.
 
     Returns:
       canvas: (PIL.Image) canvas with image pasted.
       boxes: (tensor) adjusted object boxes.
     '''
-    w, h = out_size
-    canvas = Image.new('RGB', (w,h))
+    w, h = img.size
+    ratio = random.uniform(1, max_ratio)
+    ow, oh = int(w*ratio), int(h*ratio)
+    canvas = Image.new('RGB', (ow,oh), fill)
 
-    x = 0 if left_top else random.randint(0, w - img.size[0])
-    y = 0 if left_top else random.randint(0, h - img.size[1])
+    x = random.randint(0, ow - w)
+    y = random.randint(0, oh - h)
     canvas.paste(img, (x,y))
 
     if boxes is not None:
