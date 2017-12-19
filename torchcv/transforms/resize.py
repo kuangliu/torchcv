@@ -1,9 +1,10 @@
 import torch
+import random
 
 from PIL import Image
 
 
-def resize(img, boxes, size, max_size=1000):
+def resize(img, boxes, size, max_size=1000, random_interpolation=False):
     '''Resize the input PIL image to given size.
 
     If boxes is not None, resize boxes accordingly.
@@ -16,6 +17,8 @@ def resize(img, boxes, size, max_size=1000):
         - if is int, resize the shorter side to the size while maintaining the aspect ratio.
       max_size: (int) when size is int, limit the image longer size to max_size.
                 This is essential to limit the usage of GPU memory.
+      random_interpolation: (bool) randomly choose a resize interpolation method.
+
     Returns:
       img: (PIL.Image) resized image.
       boxes: (tensor) resized boxes.
@@ -39,7 +42,14 @@ def resize(img, boxes, size, max_size=1000):
         sw = float(ow) / w
         sh = float(oh) / h
 
-    img = img.resize((ow,oh), Image.BILINEAR)
+    method = random.choice([
+        Image.BOX,
+        Image.NEAREST,
+        Image.HAMMING,
+        Image.BICUBIC,
+        Image.LANCZOS,
+        Image.BILINEAR]) if random_interpolation else Image.BILINEAR
+    img = img.resize((ow,oh), method)
     if boxes is not None:
         boxes = boxes * torch.Tensor([sw,sh,sw,sh])
     return img, boxes
