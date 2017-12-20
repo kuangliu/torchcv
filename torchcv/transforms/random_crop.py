@@ -8,13 +8,18 @@ from PIL import Image
 from torchcv.utils.box import box_iou, box_clamp
 
 
-def random_crop(img, boxes, labels):
+def random_crop(
+        img, boxes, labels,
+        min_scale=0.3,
+        max_aspect_ratio=2):
     '''Randomly crop PIL image.
 
     Args:
       img: (PIL.Image) image.
       boxes: (tensor) bounding boxes, sized [#obj, 4].
       labels: (tensor) bounding box labels, sized [#obj,].
+      min_scale: (float) minimal image width/height scale.
+      max_aspect_ratio: (float) maximum width/height aspect ratio.
 
     Returns:
       img: (PIL.Image) cropped image.
@@ -34,9 +39,9 @@ def random_crop(img, boxes, labels):
             return img, boxes, labels
 
         for _ in range(100):
-            w = random.randrange(int(0.1*imw), imw)
-            h = random.randrange(int(0.1*imh), imh)
-            if h > 2*w or w > 2*h:
+            w = random.randrange(int(min_scale*imw), imw)
+            h = random.randrange(int(min_scale*imh), imh)
+            if h > max_aspect_ratio * w or w > max_aspect_ratio * h:
                 continue
 
             x = random.randrange(imw - w)
