@@ -13,12 +13,15 @@ class FocalLoss(nn.Module):
         super(FocalLoss, self).__init__()
         self.num_classes = num_classes
 
-    def focal_loss(self, x, y):
-        '''Focal loss.
+    def focal_loss_sigmoid(self, x, y):
+        '''Sigmoid version of focal loss.
+
+        This is described in the original paper.
+        With BCELoss, the background should not be counted in num_classes.
 
         Args:
-          x: (tensor) sized [N,D].
-          y: (tensor) sized [N,].
+          x: (tensor) predictions, sized [N,D].
+          y: (tensor) targets, sized [N,].
 
         Return:
           (tensor) focal loss.
@@ -36,12 +39,32 @@ class FocalLoss(nn.Module):
         w = w * (1-pt).pow(gamma)
         return F.binary_cross_entropy_with_logits(x, t, w, size_average=False)
 
-    def focal_loss_alt(self, x, y):
+    def focal_loss_softmax(self, x, y):
+        '''Softmax version of focal loss.
+
+        With CrossEntropyLoss, the background need to be counted in num_classes.
+
+        Args:
+          x: (tensor) predictions, sized [N,D].
+          y: (tensor) targets, sized [N,].
+
+        Return:
+          (tensor) focal loss.
+        '''
+        t = one_hot_embedding(y.data.cpu(), self.num_classes)
+        t = Variable(t).cuda()   # [N,D]
+        p = F.softmax(x, dim=1)  # [N,D]
+        pt = (p*t).sum(1)        # [N,]
+        loss = F.cross_entropy(x, y, reduce=False)  # [N,]
+        loss = (1-pt).pow(2) * loss
+        return loss.sum()
+
+    def focal_loss_sigmoid_alt(self, x, y):
         '''Focal loss alternative.
 
         Args:
-          x: (tensor) sized [N,D].
-          y: (tensor) sized [N,].
+          x: (tensor) predictions, sized [N,D].
+          y: (tensor) targets, sized [N,].
 
         Return:
           (tensor) focal loss.
@@ -89,7 +112,7 @@ class FocalLoss(nn.Module):
         pos_neg = cls_targets > -1  # exclude ignored anchors
         mask = pos_neg.unsqueeze(2).expand_as(cls_preds)
         masked_cls_preds = cls_preds[mask].view(-1,self.num_classes)
-        cls_loss = self.focal_loss(masked_cls_preds, cls_targets[pos_neg])
+        cls_loss = self.focal_loss_sigmoid(masked_cls_preds, cls_targets[pos_neg])
 
         print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.data[0]/num_pos, cls_loss.data[0]/num_pos), end=' | ')
         loss = (loc_loss+cls_loss)/num_pos
