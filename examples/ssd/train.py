@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import random
 import argparse
 
 import torch
@@ -34,12 +35,14 @@ print('==> Preparing dataset..')
 box_coder = SSDBoxCoder()
 img_size = 300
 def transform_train(img, boxes, labels):
-    img, boxes = random_paste(img, boxes, max_ratio=4, fill=(123,116,103))
+    img = transforms.ColorJitter(
+            brightness=32/255., contrast=0.5, saturation=0.5, hue=0.1)(img)
+    if random.random() < 0.5:
+        img, boxes = random_paste(img, boxes, max_ratio=4, fill=(123,116,103))
     img, boxes, labels = random_crop(img, boxes, labels)
     img, boxes = resize(img, boxes, size=(img_size,img_size), random_interpolation=True)
     img, boxes = random_flip(img, boxes)
     img = transforms.Compose([
-        transforms.ColorJitter(brightness=32/255., contrast=0.5, saturation=0.5, hue=0.1),
         transforms.ToTensor(),
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
@@ -80,8 +83,9 @@ if args.resume:
     best_loss = checkpoint['loss']
     start_epoch = checkpoint['epoch']
 
-net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
 net.cuda()
+net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
+cudnn.benchmark = True
 
 criterion = SSDLoss(num_classes=21)
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)

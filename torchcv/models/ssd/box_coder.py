@@ -89,24 +89,42 @@ class SSDBoxCoder:
         cls_targets[index<0] = 0
         return loc_targets, cls_targets
 
-    def decode(self, loc_preds, cls_preds):
-        '''Transform predicted loc/cls back to real box locations and class labels.
+    def decode(self, loc_preds, cls_preds, score_thresh=0.6, nms_thresh=0.45):
+        '''Decode predicted loc/cls back to real box locations and class labels.
 
         Args:
           loc_preds: (tensor) predicted loc, sized [8732,4].
           cls_preds: (tensor) predicted conf, sized [8732,21].
+          score_thresh: (float) threshold for object confidence score.
+          nms_thresh: (float) threshold for box nms.
 
         Returns:
-          boxes: (tensor) bbox locations, sized [#obj, 4].
-          labels: (tensor) class labels, sized [#obj,1].
+          boxes: (tensor) bbox locations, sized [#obj,4].
+          labels: (tensor) class labels, sized [#obj,].
         '''
         variances = (0.1, 0.2)
-        wh = torch.exp(loc[:,2:]*variances[1]) * self.default_boxes[:,2:]
-        cxcy = loc[:,:2] * variances[0] * self.default_boxes[:,2:] + self.default_boxes[:,:2]
-        boxes = torch.cat([cxcy-wh/2, cxcy+wh/2], 1)  # [8732,4]
+        xy = loc_preds[:,:2] * variances[0] * self.default_boxes[:,2:] + self.default_boxes[:,:2]
+        wh = torch.exp(loc_preds[:,2:]*variances[1]) * self.default_boxes[:,2:]
+        box_preds = torch.cat([xy-wh/2, xy+wh/2], 1)
 
-        max_conf, labels = conf.max(1)  # [8732,1]
-        ids = labels.squeeze(1).nonzero().squeeze(1)  # [#boxes,]
+        boxes = []
+        labels = []
+        scores = []
+        num_classes = cls_preds.size(1)
+        for i in range(num_classes-1):
+            score = cls_preds[:,i+1]  # class i corresponds to (i+1) column
+            mask = score > score_thresh
+            if not mask.any():
+                continue
+            box = box_preds[mask.nonzero().squeeze()]
+            score = score[mask]
 
-        keep = box_nms(boxes[ids], max_conf[ids].squeeze(1))
-        return boxes[ids][keep], labels[ids][keep], max_conf[ids][keep]
+            keep = box_nms(box, score, nms_thresh)
+            boxes.append(box[keep])
+            labels.append(torch.LongTensor(len(box[keep])).fill_(i))
+            scores.append(score[keep])
+
+        boxes = torch.cat(boxes, 0)
+        labels = torch.cat(labels, 0)
+        scores = torch.cat(scores, 0)
+        return boxes, labels, scores
