@@ -69,6 +69,6 @@ class SSDLoss(nn.Module):
         pos_neg = pos | neg
         cls_loss = cls_loss[pos_neg.view(-1)].sum()
 
-        print('loc_loss: %.3f | cls_loss: %.3f' % (100*loc_loss.data[0]/num_pos, cls_loss.data[0]/num_pos), end=' | ')
-        loss = (100*loc_loss+cls_loss)/num_pos
+        print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.data[0]/num_pos, cls_loss.data[0]/num_pos), end=' | ')
+        loss = (loc_loss+cls_loss)/num_pos
         return loss

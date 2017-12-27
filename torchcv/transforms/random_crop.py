@@ -1,6 +1,7 @@
 '''This random crop strategy is described in paper:
    [1] SSD: Single Shot MultiBox Detector
 '''
+import math
 import torch
 import random
 
@@ -11,7 +12,7 @@ from torchcv.utils.box import box_iou, box_clamp
 def random_crop(
         img, boxes, labels,
         min_scale=0.3,
-        max_aspect_ratio=2):
+        max_aspect_ratio=2.):
     '''Randomly crop PIL image.
 
     Args:
@@ -25,41 +26,33 @@ def random_crop(
       img: (PIL.Image) cropped image.
       selected_boxes: (tensor) selected boxes.
       selected_labels: (tensor) selected box labels.
+
+    When min_iou is:
+      1. None: use original image
+      2. 0: randomly sample a patch
+      3. 0.1~0.9: minimal iou > min_iou
     '''
     imw, imh = img.size
-    while True:
-        '''
-        When min_iou is:
-          1. None: use original image
-          2. 0: randomly sample a patch
-          3. 0.1~0.9: minimal iou > min_iou
-        '''
-        min_iou = random.choice([None, 0, 0.1, 0.3, 0.5, 0.7, 0.9])
-        if min_iou is None:
-            return img, boxes, labels
-
+    params = [(0, 0, imw, imh)]  # crop roi (x,y,w,h) out
+    for min_iou in (0, 0.1, 0.3, 0.5, 0.7, 0.9):
         for _ in range(100):
-            w = random.randrange(int(min_scale*imw), imw)
-            h = random.randrange(int(min_scale*imh), imh)
-            if h > max_aspect_ratio * w or w > max_aspect_ratio * h:
-                continue
+            scale = random.uniform(min_scale, 1)
+            aspect_ratio = random.uniform(
+                max(1/max_aspect_ratio, scale*scale),
+                min(max_aspect_ratio, 1/(scale*scale)))
+            w = int(imw * scale * math.sqrt(aspect_ratio))
+            h = int(imh * scale / math.sqrt(aspect_ratio))
 
             x = random.randrange(imw - w)
             y = random.randrange(imh - h)
 
-            center = (boxes[:,:2] + boxes[:,2:]) / 2
-            mask = (center[:,0]>=x) & (center[:,0]<=x+w) \
-                 & (center[:,1]>=y) & (center[:,1]<=y+h)
-            if not mask.any():
-                continue
-
             roi = torch.Tensor([[x,y,x+w,y+h]])
-            selected_boxes = boxes[mask.nonzero().squeeze(),:]
-            iou = box_iou(selected_boxes, roi)
-            if iou.min() < min_iou:
-                continue
-
-            img = img.crop((x,y,x+w,y+h))
-            selected_boxes = selected_boxes - torch.Tensor([x,y,x,y])
-            selected_boxes = box_clamp(selected_boxes, 0,0,w,h)
-            return img, selected_boxes, labels[mask]
+            ious = box_iou(boxes, roi)
+            if ious.min() >= min_iou:
+                params.append((x,y,w,h))
+                break
+    x,y,w,h = random.choice(params)
+    img = img.crop((x,y,x+w,y+h))
+    boxes = boxes - torch.Tensor([x,y,x,y])
+    boxes = box_clamp(boxes, 0,0,w,h)
+    return img, boxes, labels
