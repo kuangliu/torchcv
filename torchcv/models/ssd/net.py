@@ -15,7 +15,6 @@ class L2Norm2d(nn.Module):
 
     def forward(self, x, dim=1):
         '''out = scale * x / sqrt(\sum x_i^2)'''
-        t = x.pow(2).sum(dim).clamp(min=1e-12).rsqrt()
         return self.scale * x * x.pow(2).sum(dim).clamp(min=1e-12).rsqrt().unsqueeze(dim)
 
 
