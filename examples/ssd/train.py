@@ -39,7 +39,7 @@ def transform_train(img, boxes, labels):
             brightness=32/255., contrast=0.5, saturation=0.5, hue=0.1)(img)
     if random.random() < 0.5:
         img, boxes = random_paste(img, boxes, max_ratio=4, fill=(123,116,103))
-    img, boxes = random_crop(img, boxes)
+    img, boxes, labels = random_crop(img, boxes, labels)
     img, boxes = resize(img, boxes, size=(img_size,img_size), random_interpolation=True)
     img, boxes = random_flip(img, boxes)
     img = transforms.Compose([
