@@ -19,7 +19,7 @@ from torch.autograd import Variable
 from torchcv.models.loss import SSDLoss
 from torchcv.models.ssd import SSD300, SSDBoxCoder
 from torchcv.datasets import ListDataset
-from torchcv.transforms import resize, random_flip, random_paste, random_crop
+from torchcv.transforms import resize, random_flip, random_paste, random_crop, random_distort
 
 
 parser = argparse.ArgumentParser(description='PyTorch RetinaNet Training')
@@ -35,8 +35,7 @@ print('==> Preparing dataset..')
 box_coder = SSDBoxCoder()
 img_size = 300
 def transform_train(img, boxes, labels):
-    img = transforms.ColorJitter(
-            brightness=32/255., contrast=0.5, saturation=0.5, hue=0.1)(img)
+    img = random_distort(img)
     if random.random() < 0.5:
         img, boxes = random_paste(img, boxes, max_ratio=4, fill=(123,116,103))
     img, boxes, labels = random_crop(img, boxes, labels)
@@ -67,8 +66,8 @@ testset = ListDataset(root='/search/odin/liukuang/data/voc_all_images',
                       list_file='torchcv/datasets/voc/voc07_test.txt',
                       transform=transform_test)
 
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=8)
-testloader = torch.utils.data.DataLoader(testset, batch_size=128, shuffle=False, num_workers=8)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
+testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=8)
 
 # Model
 net = SSD300(num_classes=21)
