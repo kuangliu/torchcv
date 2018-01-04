@@ -207,7 +207,10 @@ class VGG16Extractor512(nn.Module):
 
 
 class SSD512(nn.Module):
-    
+    steps = (8, 16, 32, 64, 128, 256, 512)
+    box_sizes = (35.84, 76.8, 153.6, 230.4, 307.2, 384.0, 460.8, 537.6)  # default bounding box sizes for each feature map.
+    aspect_ratios = ((2,), (2, 3), (2, 3), (2, 3), (2, 3), (2,), (2,))
+    fm_sizes = (64, 32, 16, 8, 4, 2, 1)
 
     def __init__(self, num_classes):
         super(SSD512, self).__init__()
