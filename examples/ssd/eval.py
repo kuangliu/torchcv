@@ -34,18 +34,18 @@ dataset = ListDataset(root='/search/odin/liukuang/data/voc_all_images/', \
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
 box_coder = SSDBoxCoder()
 
-with open('torchcv/datasets/voc/voc07_test_difficult.txt') as f:
-    diffs = []
-    for line in f.readlines():
-        line = line.strip().split()
-        diff = [int(x) for x in line[1:]]
-        diffs.append(diff)
-
 pred_boxes = []
 pred_labels = []
 pred_scores = []
 gt_boxes = []
 gt_labels = []
+
+with open('torchcv/datasets/voc/voc07_test_difficult.txt') as f:
+    gt_difficults = []
+    for line in f.readlines():
+        line = line.strip().split()
+        d = [int(x) for x in line[1:]]
+        gt_difficults.append(d)
 
 def eval(net, dataset):
     for i, (inputs, box_targets, label_targets) in enumerate(dataloader):
@@ -63,6 +63,9 @@ def eval(net, dataset):
         pred_labels.append(label_preds)
         pred_scores.append(score_preds)
 
-    print voc_eval(pred_boxes, pred_labels, pred_scores, gt_boxes, gt_labels)
+    print voc_eval(
+        pred_boxes, pred_labels, pred_scores,
+        gt_boxes, gt_labels, gt_difficults,
+        iou_thresh=0.5, use_07_metric=True)
 
 eval(net, dataset)
