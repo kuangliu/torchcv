@@ -17,23 +17,36 @@ from PIL import Image
 from torch.autograd import Variable
 
 from torchcv.models.loss import SSDLoss
-from torchcv.models.ssd import SSD300, SSDBoxCoder
+from torchcv.models.ssd import SSD300, SSD512, SSDBoxCoder
+
 from torchcv.datasets import ListDataset
 from torchcv.transforms import resize, random_flip, random_paste, random_crop, random_distort
 
 
-parser = argparse.ArgumentParser(description='PyTorch RetinaNet Training')
+parser = argparse.ArgumentParser(description='PyTorch SSD Training')
 parser.add_argument('--lr', default=1e-3, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
-parser.add_argument('--model', default='./examples/ssd/model/ssd300_vgg16.pth', type=str, help='initialized model path')
+parser.add_argument('--model', default='./examples/ssd/model/ssd512_vgg16.pth', type=str, help='initialized model path')
 parser.add_argument('--checkpoint', default='./examples/ssd/checkpoint/ckpt.pth', type=str, help='checkpoint path')
 args = parser.parse_args()
 
+# Model
+print('==> Building model..')
+net = SSD512(num_classes=21)
+net.load_state_dict(torch.load(args.model))
+best_loss = float('inf')  # best test loss
+start_epoch = 0  # start from epoch 0 or last epoch
+if args.resume:
+    print('==> Resuming from checkpoint..')
+    checkpoint = torch.load(args.checkpoint)
+    net.load_state_dict(checkpoint['net'])
+    best_loss = checkpoint['loss']
+    start_epoch = checkpoint['epoch']
 
 # Dataset
 print('==> Preparing dataset..')
-box_coder = SSDBoxCoder()
-img_size = 300
+box_coder = SSDBoxCoder(net)
+img_size = 512
 def transform_train(img, boxes, labels):
     img = random_distort(img)
     if random.random() < 0.5:
@@ -45,7 +58,7 @@ def transform_train(img, boxes, labels):
         transforms.ToTensor(),
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
-    boxes, labels = box_coder.encode(boxes, labels, (img_size,img_size))
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
 trainset = ListDataset(root='/search/odin/liukuang/data/voc_all_images',
@@ -59,7 +72,7 @@ def transform_test(img, boxes, labels):
         transforms.ToTensor(),
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
-    boxes, labels = box_coder.encode(boxes, labels, (img_size,img_size))
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
 testset = ListDataset(root='/search/odin/liukuang/data/voc_all_images',
@@ -68,19 +81,6 @@ testset = ListDataset(root='/search/odin/liukuang/data/voc_all_images',
 
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
 testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=8)
-
-# Model
-net = SSD300(num_classes=21)
-net.load_state_dict(torch.load(args.model))
-
-best_loss = float('inf')  # best test loss
-start_epoch = 0  # start from epoch 0 or last epoch
-if args.resume:
-    print('==> Resuming from checkpoint..')
-    checkpoint = torch.load(args.checkpoint)
-    net.load_state_dict(checkpoint['net'])
-    best_loss = checkpoint['loss']
-    start_epoch = checkpoint['epoch']
 
 net.cuda()
 net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))

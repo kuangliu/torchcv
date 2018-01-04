@@ -8,11 +8,11 @@ from torchcv.utils.box import box_iou, box_nms, change_box_order
 
 
 class SSDBoxCoder:
-    def __init__(self):
-        self.steps = (8, 16, 32, 64, 100, 300)
-        self.box_sizes = (30, 60, 111, 162, 213, 264, 315)  # default bounding box sizes for each feature map.
-        self.aspect_ratios = ((2,), (2,3), (2,3), (2,3), (2,), (2,))
-        self.fm_sizes = (38, 19, 10, 5, 3, 1)
+    def __init__(self, ssd_model):
+        self.steps = ssd_model.steps
+        self.box_sizes = ssd_model.box_sizes
+        self.aspect_ratios = ssd_model.aspect_ratios
+        self.fm_sizes = ssd_model.fm_sizes
         self.default_boxes = self._get_default_boxes()
 
     def _get_default_boxes(self):
