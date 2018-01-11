@@ -31,10 +31,10 @@ class VGG16(nn.Module):
         return nn.Sequential(*layers)
 
 
-class L2Norm2d(nn.Module):
+class L2Norm(nn.Module):
     '''L2Norm layer across all channels.'''
     def __init__(self, in_features, scale):
-        super(L2Norm2d, self).__init__()
+        super(L2Norm, self).__init__()
         self.in_features = in_features
         self.weight = nn.Parameter(torch.Tensor(self.in_features))
         self.reset_parameters(scale)
@@ -53,7 +53,7 @@ class VGG16Extractor300(nn.Module):
         super(VGG16Extractor300, self).__init__()
 
         self.features = VGG16()
-        self.norm4 = L2Norm2d(512, 20)
+        self.norm4 = L2Norm(512, 20)
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
@@ -150,7 +150,7 @@ class VGG16Extractor512(nn.Module):
         super(VGG16Extractor512, self).__init__()
 
         self.features = VGG16()
-        self.norm4 = L2Norm2d(512, 20)
+        self.norm4 = L2Norm(512, 20)
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
