@@ -43,8 +43,9 @@ class L2Norm2d(nn.Module):
         init.constant(self.weight, scale)
 
     def forward(self, x):
-        out = self.weight[None,:,None,None] * x * x.pow(2).sum(1).clamp(min=1e-12).rsqrt().unsqueeze(1)
-        return out
+        x = F.normalize(x, dim=1)
+        scale = self.weight[None,:,None,None]
+        return scale * x
 
 
 class VGG16Extractor300(nn.Module):
