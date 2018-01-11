@@ -33,13 +33,18 @@ class VGG16(nn.Module):
 
 class L2Norm2d(nn.Module):
     '''L2Norm layer across all channels.'''
-    def __init__(self, scale):
+    def __init__(self, in_features, scale):
         super(L2Norm2d, self).__init__()
-        self.scale = scale
+        self.in_features = in_features
+        self.weight = nn.Parameter(torch.Tensor(self.in_features))
+        self.reset_parameters(scale)
 
-    def forward(self, x, dim=1):
-        '''out = scale * x / sqrt(\sum x_i^2)'''
-        return self.scale * x * x.pow(2).sum(dim).clamp(min=1e-12).rsqrt().unsqueeze(dim)
+    def reset_parameters(self, scale):
+        init.constant(self.weight, scale)
+
+    def forward(self, x):
+        out = self.weight[None,:,None,None] * x * x.pow(2).sum(1).clamp(min=1e-12).rsqrt().unsqueeze(1)
+        return out
 
 
 class VGG16Extractor300(nn.Module):
@@ -47,7 +52,7 @@ class VGG16Extractor300(nn.Module):
         super(VGG16Extractor300, self).__init__()
 
         self.features = VGG16()
-        self.norm4 = L2Norm2d(20)
+        self.norm4 = L2Norm2d(512, 20)
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
@@ -144,7 +149,7 @@ class VGG16Extractor512(nn.Module):
         super(VGG16Extractor512, self).__init__()
 
         self.features = VGG16()
-        self.norm4 = L2Norm2d(20)
+        self.norm4 = L2Norm2d(512, 20)
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1)
@@ -244,8 +249,8 @@ class SSD512(nn.Module):
 
 
 def test():
-    net = SSD512(21)
-    loc_preds, cls_preds = net(Variable(torch.randn(1,3,512,512)))
+    net = SSD300(21)
+    loc_preds, cls_preds = net(Variable(torch.randn(1,3,300,300)))
     print(loc_preds.size(), cls_preds.size())
 
 # test()
