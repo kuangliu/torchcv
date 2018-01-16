@@ -2,12 +2,15 @@
 
 
 ## Detection
-| Model             | Original Paper | ChainerCV | TorchCV |
-| ----------------- | -------------- | ----------| ------- |
-| SSD300@voc07_test | 74.3%          | 77.8%     |  76.68% |
+| Model             | Original Paper | ChainerCV  | TorchCV  |
+| ----------------- | -------------- | ---------- | -------  |
+| SSD300@voc07_test | 74.3%          | 77.8%      |  76.68%  |
+| SSD512@voc07_test | 76.8%          | 79.2%      |  78.89%* |
+
+\* I also did another experiment by replacing [pytorch/vision](https://github.com/pytorch/vision) VGG16 model with the [model](https://github.com/chainer/chainercv/tree/master/examples/ssd) used in ChainerCV. And I got 79.85% accuracy.
 
 ## Todo
 - [x] SSD300
-- [ ] SSD512
+- [x] SSD512
 - [ ] YOLOV2
 - [ ] RetinaNet
