@@ -16,10 +16,10 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torch.autograd import Variable
 
-from torchcv.models.loss import SSDLoss
 from torchcv.models.fpnssd import FPNSSD512
 from torchcv.models.ssd import SSD300, SSD512, SSDBoxCoder
 
+from torchcv.loss import SSDLoss
 from torchcv.datasets import ListDataset
 from torchcv.transforms import resize, random_flip, random_paste, random_crop, random_distort
 
