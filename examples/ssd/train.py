@@ -17,6 +17,7 @@ from PIL import Image
 from torch.autograd import Variable
 
 from torchcv.models.loss import SSDLoss
+from torchcv.models.fpnssd import FPNSSD512
 from torchcv.models.ssd import SSD300, SSD512, SSDBoxCoder
 
 from torchcv.datasets import ListDataset
@@ -32,7 +33,8 @@ args = parser.parse_args()
 
 # Model
 print('==> Building model..')
-net = SSD512(num_classes=21)
+# net = SSD512(num_classes=21)
+net = FPNSSD512(num_classes=21)
 net.load_state_dict(torch.load(args.model))
 best_loss = float('inf')  # best test loss
 start_epoch = 0  # start from epoch 0 or last epoch
