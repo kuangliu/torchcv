@@ -8,7 +8,7 @@
 | SSD512@voc07_test    | 76.8%          | 79.2%      |  78.89%   |
 | FPNSSD512@voc07_test | -              | -          |  81.33%   |
 
-The accuracy of TorchCV is ~1% lower than the ChainerCV version. That's because the VGG model I used performs slightly worse. I did another experiment by replacing [pytorch/vision](https://github.com/pytorch/vision) VGG16 model with the [model](https://github.com/chainer/chainercv/blob/master/chainercv/links/model/ssd/ssd_vgg16.py#L298) used in ChainerCV, and the SSD512 model got 79.85% accuracy.
+TorchCV SSD model accuracy is ~1% lower than ChainerCV's. That's because the VGG base network I use performs slightly worse. I did the experiment by replacing [pytorch/vision](https://github.com/pytorch/vision) VGG16 model with the [model](https://github.com/chainer/chainercv/blob/master/chainercv/links/model/ssd/ssd_vgg16.py#L298) used in ChainerCV, and SSD512 model got __79.85%__ accuracy.
 
 FPNSSD512 is created by replacing SSD VGG16 network with FPN50, the rest is almost the same. And it beats all SSD models.
 

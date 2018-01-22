@@ -1,4 +1,3 @@
-'''SSD model with VGG16 as feature extractor.'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
