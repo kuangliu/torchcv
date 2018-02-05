@@ -11,7 +11,8 @@
 The accuracy of TorchCV SSD is ~1% lower than ChainerCV. This is because the VGG base model I use performs slightly worse.  
 I did the experiment by replacing [pytorch/vision](https://github.com/pytorch/vision) VGG16 model with the [model](https://github.com/chainer/chainercv/blob/master/chainercv/links/model/ssd/ssd_vgg16.py#L298) used in ChainerCV, the SSD512 model got __79.85%__ accuracy.
 
-FPNSSD512 is created by replacing SSD VGG16 network with FPN50, the rest is the same. It beats all SSD models.
+FPNSSD512 is created by replacing SSD VGG16 network with FPN50, the rest is the same. It beats all SSD models.  
+You can download the trained params [here](https://drive.google.com/open?id=1yy_kUnm_hZR3uk9yLcaQSMwxVn7wApTU).
 
 
 ## TODO
