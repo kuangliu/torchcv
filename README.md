@@ -14,6 +14,11 @@ I did the experiment by replacing [pytorch/vision](https://github.com/pytorch/vi
 FPNSSD512 is created by replacing SSD VGG16 network with FPN50, the rest is the same. It beats all SSD models.  
 You can download the trained params [here](https://drive.google.com/open?id=1yy_kUnm_hZR3uk9yLcaQSMwxVn7wApTU).
 
+## Update
+Our FPNSSD512 model achieved the 1st place on the PASCAL VOC 2012 dataset (by 2018-2-6).  
+
+![image](https://user-images.githubusercontent.com/10502826/35849236-d8f0ec26-0b5b-11e8-8e13-15b08ac40c8d.png)
+Check the [learderboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=3#KEY_FPNSSD).
 
 ## TODO
 - [x] SSD300
