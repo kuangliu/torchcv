@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from PIL import Image, ImageDraw
 from torch.autograd import Variable
 from torchcv.models.fpnssd import FPNSSD512
-from torchcv.models.ssd import SSD512, SSDBoxCoder
+from torchcv.models.ssd import SSDBoxCoder
 
 
 print('Loading model..')
