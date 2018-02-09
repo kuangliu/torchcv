@@ -21,7 +21,7 @@ net.cuda()
 net.eval()
 
 print('Preparing dataset..')
-img_size = 300
+img_size = 512
 def transform(img, boxes, labels):
     img, boxes = resize(img, boxes, size=(img_size,img_size))
     img = transforms.Compose([
