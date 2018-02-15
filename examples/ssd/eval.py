@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import torch
 import torchvision
 import torch.nn.functional as F
@@ -63,9 +65,9 @@ def eval(net, dataset):
         pred_labels.append(label_preds)
         pred_scores.append(score_preds)
 
-    print voc_eval(
+    print(voc_eval(
         pred_boxes, pred_labels, pred_scores,
         gt_boxes, gt_labels, gt_difficults,
-        iou_thresh=0.5, use_07_metric=True)
+        iou_thresh=0.5, use_07_metric=True))
 
 eval(net, dataset)
