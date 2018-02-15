@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from fpn import FPN50
 from torch.autograd import Variable
+from torchcv.models.ssd.net import SSD512
 
 
 class FPNSSD512(nn.Module):
