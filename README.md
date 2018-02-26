@@ -20,7 +20,7 @@ You can download the trained params [here](https://drive.google.com/open?id=1yy_
 ![image](https://user-images.githubusercontent.com/10502826/35849236-d8f0ec26-0b5b-11e8-8e13-15b08ac40c8d.png)
 Check the [leaderboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=3#KEY_FPNSSD).
 
-[2018-2-26] As (#11) mentioned I shouldn't use VOC07 data for training. So I trained another model only on VOC12 data. I'll mark the older submission to private.  
+[2018-2-26] As [issue(#11)](https://github.com/kuangliu/torchcv/issues/11) mentioned I shouldn't use VOC07 data for training. I submit another result that is only trained on VOC12 data. The older submission is already marked to private.
 
 ![image](https://user-images.githubusercontent.com/10502826/36658797-1938173a-1b0d-11e8-810f-b1b85662ce4b.png)
 
