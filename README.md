@@ -24,6 +24,9 @@ Check the [leaderboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.p
 
 ![image](https://user-images.githubusercontent.com/10502826/36658797-1938173a-1b0d-11e8-810f-b1b85662ce4b.png)
 
+[2018-3-29] As Alibaba Turing Lab submit a result of __74.8%__ MAP, which takes the first place on Comp3, I decided to train a deeper model (replace FPN50 with FPN152, trained only with VOC12 data).  
+It got MAP of __77%__, which is far more higher than I expected.  
+Check the new [leaderboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=3#KEY_FPNSSD). The older submission is marked to private.
 
 ## TODO
 - [x] SSD300
