@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from fpn import FPN50
+from .fpn import FPN50
 from torch.autograd import Variable
 
 

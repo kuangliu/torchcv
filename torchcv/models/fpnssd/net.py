@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fpn import FPN50
+from .fpn  import FPN50
 from torch.autograd import Variable
 
 
@@ -44,7 +44,7 @@ class FPNSSD512(nn.Module):
 
 
 def test():
-    net = SSD512(21)
+    net = FPNSSD512(21)
     loc_preds, cls_preds = net(Variable(torch.randn(1,3,512,512)))
     print(loc_preds.size(), cls_preds.size())
 
