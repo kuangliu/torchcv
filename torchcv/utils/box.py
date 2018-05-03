@@ -53,7 +53,7 @@ def box_select(boxes, xmin, ymin, xmax, ymax):
     '''
     mask = (boxes[:,0]>=xmin) & (boxes[:,1]>=ymin) \
          & (boxes[:,2]<=xmax) & (boxes[:,3]<=ymax)
-    boxes = boxes[mask.nonzero().squeeze(),:]
+    boxes = boxes[mask,:]
     return boxes, mask
 
 def box_iou(box1, box2):
@@ -136,4 +136,4 @@ def box_nms(bboxes, scores, threshold=0.5, mode='union'):
         if ids.numel() == 0:
             break
         order = order[ids+1]
-    return torch.LongTensor(keep)
+    return torch.tensor(keep, dtype=torch.long)
