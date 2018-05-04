@@ -116,10 +116,10 @@ def box_nms(bboxes, scores, threshold=0.5, mode='union'):
         if order.numel() == 1:
             break
 
-        xx1 = x1[order[1:]].clamp(min=x1[i])
-        yy1 = y1[order[1:]].clamp(min=y1[i])
-        xx2 = x2[order[1:]].clamp(max=x2[i])
-        yy2 = y2[order[1:]].clamp(max=y2[i])
+        xx1 = x1[order[1:]].clamp(min=x1[i].item())
+        yy1 = y1[order[1:]].clamp(min=y1[i].item())
+        xx2 = x2[order[1:]].clamp(max=x2[i].item())
+        yy2 = y2[order[1:]].clamp(max=y2[i].item())
 
         w = (xx2-xx1).clamp(min=0)
         h = (yy2-yy1).clamp(min=0)

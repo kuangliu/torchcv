@@ -115,8 +115,8 @@ class FPNSSDBoxCoder:
         '''Decode predicted loc/cls back to real box locations and class labels.
 
         Args:
-          loc_preds: (tensor) predicted loc, sized [8732,4].
-          cls_preds: (tensor) predicted conf, sized [8732,21].
+          loc_preds: (tensor) predicted loc, sized [#anchors,4].
+          cls_preds: (tensor) predicted conf, sized [#anchors,#classes].
           score_thresh: (float) threshold for object confidence score.
           nms_thresh: (float) threshold for box nms.
 
@@ -124,7 +124,7 @@ class FPNSSDBoxCoder:
           boxes: (tensor) bbox locations, sized [#obj,4].
           labels: (tensor) class labels, sized [#obj,].
         '''
-        anchor_boxes = self.anchor_boxes
+        anchor_boxes = change_box_order(self.anchor_boxes, 'xyxy2xywh')
         xy = loc_preds[:,:2] * anchor_boxes[:,2:] + anchor_boxes[:,:2]
         wh = loc_preds[:,2:].exp() * anchor_boxes[:,2:]
         box_preds = torch.cat([xy-wh/2, xy+wh/2], 1)
@@ -138,8 +138,10 @@ class FPNSSDBoxCoder:
             mask = score > score_thresh
             if not mask.any():
                 continue
-            box = box_preds[mask.nonzero().squeeze()]
+            box = box_preds[mask]
             score = score[mask]
+            print(box.size())
+            print(score.size())
 
             keep = box_nms(box, score, nms_thresh)
             boxes.append(box[keep])
