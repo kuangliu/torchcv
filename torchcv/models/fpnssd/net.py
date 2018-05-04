@@ -20,10 +20,12 @@ class FPNSSD512(nn.Module):
         fms = self.fpn(x)
         for fm in fms:
             loc_pred = self.loc_head(fm)
+            loc_pred = loc_pred.permute(0,2,3,1)
             loc_pred = loc_pred.reshape(loc_pred.size(0), -1, 4)
             loc_preds.append(loc_pred)
 
             cls_pred = self.cls_head(fm)
+            cls_pred = cls_pred.permute(0,2,3,1)
             cls_pred = cls_pred.reshape(cls_pred.size(0), -1, self.num_classes)
             cls_preds.append(cls_pred)
 
