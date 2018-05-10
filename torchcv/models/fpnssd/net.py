@@ -20,18 +20,12 @@ class FPNSSD512(nn.Module):
         fms = self.fpn(x)
         for fm in fms:
             loc_pred = self.loc_head(fm)
-            loc_pred = loc_pred.permute(0,2,3,1)
-            loc_pred = loc_pred.reshape(loc_pred.size(0), -1, 4)
-            loc_preds.append(loc_pred)
-
             cls_pred = self.cls_head(fm)
-            cls_pred = cls_pred.permute(0,2,3,1)
-            cls_pred = cls_pred.reshape(cls_pred.size(0), -1, self.num_classes)
+            loc_pred = loc_pred.permute(0,2,3,1).reshape(x.size(0),-1,4)                 # [N, 9*4,H,W] -> [N,H,W, 9*4] -> [N,H*W*9, 4]
+            cls_pred = cls_pred.permute(0,2,3,1).reshape(x.size(0),-1,self.num_classes)  # [N,9*NC,H,W] -> [N,H,W,9*NC] -> [N,H*W*9,NC]
+            loc_preds.append(loc_pred)
             cls_preds.append(cls_pred)
-
-        loc_preds = torch.cat(loc_preds, 1)
-        cls_preds = torch.cat(cls_preds, 1)
-        return loc_preds, cls_preds
+        return torch.cat(loc_preds, 1), torch.cat(cls_preds, 1)
 
     def _make_head(self, out_planes):
         layers = []

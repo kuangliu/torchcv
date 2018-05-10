@@ -1,3 +1,4 @@
+'''RetinaNet train on COCO.'''
 from __future__ import print_function
 
 import os
@@ -13,12 +14,11 @@ import torchvision
 import torchvision.transforms as transforms
 
 from PIL import Image
-from torch.autograd import Variable
 
+from torchcv.loss import FocalLoss
 from torchcv.datasets import ListDataset
-from torchcv.transforms import resize, random_flip, random_paste
-from torchcv.models.loss import FocalLoss
-from torchcv.models.retinanet import BoxCoder, RetinaNet
+from torchcv.models.retinanet import RetinaBoxCoder, RetinaNet
+from torchcv.transforms import pad, resize, random_flip, random_paste
 
 
 parser = argparse.ArgumentParser(description='PyTorch RetinaNet Training')
@@ -31,58 +31,47 @@ args = parser.parse_args()
 
 # Dataset
 print('==> Preparing dataset..')
+img_size = 640
+box_coder = RetinaBoxCoder()
 def transform_train(img, boxes, labels):
-    img, boxes = resize(img, boxes, size=600)
     img, boxes = random_flip(img, boxes)
+    img, boxes = resize(img, boxes, size=img_size, max_size=img_size)
+    img = pad(img, (img_size, img_size))
+    img = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
+    ])(img)
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
 def transform_test(img, boxes, labels):
-    img, boxes = resize(img, boxes, size=600)
+    img, boxes = resize(img, boxes, size=img_size, max_size=img_size)
+    img = pad(img, (img_size, img_size))
+    img = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
+    ])(img)
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
-trainset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/train2017',
+trainset = ListDataset(root='/home/liukuang/data/coco/train2017',
                        list_file='torchcv/datasets/mscoco/coco17_train.txt',
                        transform=transform_train)
-testset = ListDataset(root='/mnt/hgfs/D/mscoco/2017/val2017',
+testset = ListDataset(root='/home/liukuang/data/coco/val2017',
                       list_file='torchcv/datasets/mscoco/coco17_val.txt',
                       transform=transform_test)
 
-# DataLoader
-box_coder = BoxCoder()
-def collate_fn(batch):
-    imgs = [x[0] for x in batch]  # [PIL.Image]
-    boxes = [x[1] for x in batch]
-    labels = [x[2] for x in batch]
-
-    num_imgs = len(imgs)
-    max_w = max([im.size[0] for im in imgs])
-    max_h = max([im.size[1] for im in imgs])
-    inputs = torch.zeros(num_imgs, 3, max_h, max_w)
-
-    loc_targets = []
-    cls_targets = []
-    for i in range(num_imgs):
-        img = imgs[i]
-        boxes_i = boxes[i].clone()
-        labels_i = labels[i].clone()
-
-        img, boxes_i = random_paste(img, boxes_i, (max_w,max_h), True)
-        inputs[i] = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
-        ])(img)
-
-        loc_target, cls_target = box_coder.encode(boxes_i, labels_i, (max_w,max_h))
-        loc_targets.append(loc_target)
-        cls_targets.append(cls_target)
-    return inputs, torch.stack(loc_targets), torch.stack(cls_targets)
-
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=True, num_workers=4, collate_fn=collate_fn)
-testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=4, collate_fn=collate_fn)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=1, shuffle=True, num_workers=8)
+testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=8)
 
 # Model
-net = RetinaNet(num_classes=90)
-net.load_state_dict(torch.load(args.model))  # load pretrained model
+print('==> Building model..')
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+net = RetinaNet(num_classes=90).to(device)
+# net.load_state_dict(torch.load(args.model))
+if device == 'cuda':
+    net = torch.nn.DataParallel(net)
+    cudnn.benchmark = True
 
 best_loss = float('inf')  # best test loss
 start_epoch = 0  # start from epoch 0 or last epoch
@@ -93,22 +82,19 @@ if args.resume:
     best_loss = checkpoint['loss']
     start_epoch = checkpoint['epoch']
 
-net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
-net.cuda()
-
 criterion = FocalLoss(num_classes=90)
-optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
+# optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
+optimizer = optim.Adam(net.parameters(), lr=args.lr, amsgrad=True)
 
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
     net.train()
-    net.module.freeze_bn()
     train_loss = 0
     for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(trainloader):
-        inputs = Variable(inputs.cuda())
-        loc_targets = Variable(loc_targets.cuda())
-        cls_targets = Variable(cls_targets.cuda())
+        inputs = inputs.to(device)
+        loc_targets = loc_targets.to(device)
+        cls_targets = cls_targets.to(device)
 
         optimizer.zero_grad()
         loc_preds, cls_preds = net(inputs)
@@ -116,25 +102,25 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         print('train_loss: %.3f | avg_loss: %.3f [%d/%d]'
-              % (loss.data[0], train_loss/(batch_idx+1), batch_idx+1, len(trainloader)))
+              % (loss.item(), train_loss/(batch_idx+1), batch_idx+1, len(trainloader)))
 
-# Test
 def test(epoch):
     print('\nTest')
     net.eval()
     test_loss = 0
-    for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(testloader):
-        inputs = Variable(inputs.cuda(), volatile=True)
-        loc_targets = Variable(loc_targets.cuda())
-        cls_targets = Variable(cls_targets.cuda())
+    with torch.no_grad():
+        for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(testloader):
+            inputs = inputs.to(device)
+            loc_targets = loc_targets.to(device)
+            cls_targets = cls_targets.to(device)
 
-        loc_preds, cls_preds = net(inputs)
-        loss = criterion(loc_preds, loc_targets, cls_preds, cls_targets)
-        test_loss += loss.data[0]
-        print('test_loss: %.3f | avg_loss: %.3f [%d/%d]'
-              % (loss.data[0], test_loss/(batch_idx+1), batch_idx+1, len(testloader)))
+            loc_preds, cls_preds = net(inputs)
+            loss = criterion(loc_preds, loc_targets, cls_preds, cls_targets)
+            test_loss += loss.item()
+            print('test_loss: %.3f | avg_loss: %.3f [%d/%d]'
+                  % (loss.item(), test_loss/(batch_idx+1), batch_idx+1, len(testloader)))
 
     # Save checkpoint
     global best_loss
@@ -142,7 +128,7 @@ def test(epoch):
     if test_loss < best_loss:
         print('Saving..')
         state = {
-            'net': net.module.state_dict(),
+            'net': net.state_dict(),
             'loss': test_loss,
             'epoch': epoch,
         }

@@ -44,7 +44,7 @@ class FPNSSDBoxCoder:
         '''
         num_fms = len(self.anchor_areas)
         anchor_wh = self._get_anchor_wh()
-        fm_sizes = [(input_size/pow(2.,i+3)).ceil() for i in range(num_fms)]  # p3 -> p7 feature map sizes
+        fm_sizes = [(input_size/pow(2.,i+3)).ceil() for i in range(num_fms)]
 
         boxes = []
         for i in range(num_fms):
