@@ -67,7 +67,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, n
 # Model
 print('==> Building model..')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-net = RetinaNet(num_classes=90).to(device)
+net = RetinaNet(num_classes=80).to(device)
 # net.load_state_dict(torch.load(args.model))
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -82,7 +82,7 @@ if args.resume:
     best_loss = checkpoint['loss']
     start_epoch = checkpoint['epoch']
 
-criterion = FocalLoss(num_classes=90)
+criterion = FocalLoss(num_classes=80)
 # optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
 optimizer = optim.Adam(net.parameters(), lr=args.lr, amsgrad=True)
 
