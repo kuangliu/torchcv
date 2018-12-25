@@ -23,9 +23,10 @@ def random_paste(img, boxes, max_ratio=4, fill=0):
     ratio = random.uniform(1, max_ratio)
     ow, oh = int(w*ratio), int(h*ratio)
     canvas = Image.new('RGB', (ow,oh), fill)
-
-    x = random.randint(0, ow - w)
-    y = random.randint(0, oh - h)
+    
+    #if random ratio is 1, random.randint(0,0) will cause error.
+    x = random.randint(0, ow - w+1)
+    y = random.randint(0, oh - h+1)
     canvas.paste(img, (x,y))
 
     if boxes is not None:
